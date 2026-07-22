@@ -32,15 +32,10 @@ jobs:
           # 내 폰의 순정 버전명 (6.1.157-android14-11) 강제 지정
           export EXTRAVERSION="-android14-11-gsu"
 
-          # KernelSU-Next 직접 소스 주입 및 경로 심볼릭 링크 연결
-          git clone https://github.com/KernelSU-Next/KernelSU-Next.git drivers/kernelsu
-          ln -sf kernel/Kconfig drivers/kernelsu/Kconfig
-          ln -sf kernel/Makefile drivers/kernelsu/Makefile
-          
-          echo 'obj-y += kernelsu/' >> drivers/Makefile
-          grep -q "kernelsu" drivers/Kconfig || sed -i '/endmenu/i source "drivers/kernelsu/Kconfig"' drivers/Kconfig
+          # KernelSU 공식 setup.sh를 사용하여 Bazel 및 Kconfig에 자동 등록
+          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 
-          # SuSFS 1.5.2 커널 패치 직접 주입
+          # SuSFS 1.5.2 커널 패치 적용
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1 susfs
           cp susfs/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch drivers/kernelsu/ || true
           cp susfs/kernel_patches/fs/* fs/ || true
