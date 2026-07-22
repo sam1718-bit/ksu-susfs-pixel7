@@ -47,10 +47,19 @@ jobs:
       - name: Compile GKI Kernel
         run: |
           cd android-kernel
-          LTO=thin ./build/build.sh
+          # GKI 6.1 빌드 스크립트 경로 자동 탐색 및 실행
+          if [ -f "build/kernel/kleaf/build.sh" ]; then
+            LTO=thin ./build/kernel/kleaf/build.sh
+          elif [ -f "build/build.sh" ]; then
+            LTO=thin ./build/build.sh
+          else
+            LTO=thin ./tools/bazel run //common:kernel_aarch64_dist
+          fi
 
       - name: Upload Custom boot.img Artifact
         uses: actions/upload-artifact@v4
         with:
           name: KSU-Next-SuSFS-Pixel7-BootImage
-          path: android-kernel/out/**/dist/boot.img
+          path: |
+            android-kernel/out/**/boot.img
+            android-kernel/out/**/Image
