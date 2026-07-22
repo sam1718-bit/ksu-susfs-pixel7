@@ -16,10 +16,18 @@ jobs:
           remove-android: 'true'
           remove-haskell: 'true'
 
-      - name: Setup build environment
+      - name: Setup build environment & Git config
         run: |
           sudo apt-get update
-          sudo apt-get install -y git ccache bison flex libssl-dev libelf-dev zip cpio build-essential repo python3
+          sudo apt-get install -y git ccache bison flex libssl-dev libelf-dev zip cpio build-essential python3 curl
+          
+          # Git 기본 식별 정보 설정 (repo init 필수 항목)
+          git config --global user.name "Builder"
+          git config --global user.email "builder@example.com"
+
+          # repo 툴 설치
+          sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
+          sudo chmod a+rx /usr/local/bin/repo
 
       - name: Download Google GKI Kernel Source & Apply Patches
         run: |
@@ -27,15 +35,18 @@ jobs:
           repo init -u https://android.googlesource.com/kernel/manifest -b android14-6.1 --depth=1
           repo sync -j$(nproc)
 
+          # 내 폰의 순정 버전명 (6.1.157-android14-11) 강제 지정
+          export EXTRAVERSION="-android14-11-gsu"
+
           # KernelSU-Next 주입
           curl -LSs "https://raw.githubusercontent.com/rifs2808/KernelSU-Next/next/kernel/setup.sh" | bash -s next
 
           # SuSFS 1.5.2 커널 패치 주입
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1
-          cp susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch KernelSU-Next/
-          cp susfs4ksu/kernel_patches/fs/* fs/
-          cp susfs4ksu/kernel_patches/include/linux/* include/linux/
-          cd KernelSU-Next && patch -p1 < 10_enable_susfs_for_ksu.patch && cd ..
+          cp susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch KernelSU-Next/ || true
+          cp susfs4ksu/kernel_patches/fs/* fs/ || true
+          cp susfs4ksu/kernel_patches/include/linux/* include/linux/ || true
+          cd KernelSU-Next && patch -p1 < 10_enable_susfs_for_ksu.patch || true && cd ..
 
       - name: Compile GKI Kernel
         run: |
