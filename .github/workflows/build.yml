@@ -32,8 +32,8 @@ jobs:
           # 내 폰의 순정 버전명 (6.1.157-android14-11) 강제 지정
           export EXTRAVERSION="-android14-11-gsu"
 
-          # KernelSU 공식 setup.sh를 사용하여 Bazel 및 Kconfig에 자동 등록
-          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+          # KernelSU-Next 정식 공식 setup.sh를 사용하여 KernelSU-Next 엔진 주입
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s next
 
           # SuSFS 1.5.2 커널 패치 적용
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1 susfs
