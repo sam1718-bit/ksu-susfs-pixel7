@@ -29,7 +29,8 @@ jobs:
           # 커널 소스 폴더 진입
           cd common
 
-          # 내 폰의 순정 버전명 및 KSU 매니저 타겟 버전(33214) 강제 지정
+          # 버전 변수를 GITHUB_ENV 전체 환경변수에 영구 기록
+          echo "KSU_VERSION=33214" >> $GITHUB_ENV
           export EXTRAVERSION="-android14-11-gsu"
           export KSU_VERSION=33214
 
@@ -46,6 +47,10 @@ jobs:
       - name: Compile GKI Kernel
         run: |
           cd android-kernel
+          # 컴파일 순간 KSU_VERSION=33214 강제 주입
+          export KSU_VERSION=33214
+          export EXTRAVERSION="-android14-11-gsu"
+
           # GKI 6.1 빌드 스크립트 경로 자동 탐색 및 실행
           if [ -f "build/kernel/kleaf/build.sh" ]; then
             LTO=thin ./build/kernel/kleaf/build.sh
