@@ -29,8 +29,9 @@ jobs:
           # 커널 소스 폴더 진입
           cd common
 
-          # 내 폰의 순정 버전명 (6.1.157-android14-11) 강제 지정
+          # 내 폰의 순정 버전명 및 KSU 매니저 타겟 버전(33214) 강제 지정
           export EXTRAVERSION="-android14-11-gsu"
+          export KSU_VERSION=33214
 
           # KernelSU-Next 정식 공식 setup.sh를 사용하여 KernelSU-Next 엔진 주입
           curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s next
@@ -59,5 +60,5 @@ jobs:
         with:
           name: KSU-Next-SuSFS-Pixel7-BootImage
           path: |
-            android-kernel/out/**/boot.img
-            android-kernel/out/**/Image
+            android-kernel/**/*.img
+            android-kernel/**/Image
