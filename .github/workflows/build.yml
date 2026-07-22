@@ -1,0 +1,49 @@
+name: Build KernelSU-Next & SuSFS for Pixel 7 (GKI 6.1)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 8192
+          swap-size-mb: 1024
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+
+      - name: Setup build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git ccache bison flex libssl-dev libelf-dev zip cpio build-essential repo python3
+
+      - name: Download Google GKI Kernel Source & Apply Patches
+        run: |
+          mkdir android-kernel && cd android-kernel
+          repo init -u https://android.googlesource.com/kernel/manifest -b android14-6.1 --depth=1
+          repo sync -j$(nproc)
+
+          # KernelSU-Next 주입
+          curl -LSs "https://raw.githubusercontent.com/rifs2808/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+
+          # SuSFS 1.5.2 커널 패치 주입
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1
+          cp susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch KernelSU-Next/
+          cp susfs4ksu/kernel_patches/fs/* fs/
+          cp susfs4ksu/kernel_patches/include/linux/* include/linux/
+          cd KernelSU-Next && patch -p1 < 10_enable_susfs_for_ksu.patch && cd ..
+
+      - name: Compile GKI Kernel
+        run: |
+          cd android-kernel
+          LTO=thin ./build/build.sh
+
+      - name: Upload Custom boot.img Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KSU-Next-SuSFS-Pixel7-BootImage
+          path: android-kernel/out/android14-6.1/dist/boot.img
