@@ -23,22 +23,26 @@ jobs:
       - name: Download Google GKI Kernel Source & Apply Patches
         run: |
           mkdir android-kernel && cd android-kernel
-          # 구글 정식 브랜치명: common-android14-6.1 적용
           repo init -u https://android.googlesource.com/kernel/manifest -b common-android14-6.1 --depth=1
           repo sync -j$(nproc)
+
+          # 커널 소스 폴더 진입
+          cd common
 
           # 내 폰의 순정 버전명 (6.1.157-android14-11) 강제 지정
           export EXTRAVERSION="-android14-11-gsu"
 
-          # KernelSU-Next 주입
-          curl -LSs "https://raw.githubusercontent.com/rifs2808/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+          # KernelSU-Next 직접 소스 주입
+          git clone https://github.com/KernelSU-Next/KernelSU-Next.git drivers/kernelsu
+          echo 'obj-y += kernelsu/' >> drivers/Makefile
+          grep -q "kernelsu" drivers/Kconfig || sed -i '/endmenu/i source "drivers/kernelsu/Kconfig"' drivers/Kconfig
 
-          # SuSFS 1.5.2 커널 패치 주입
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1 || true
-          cp susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch KernelSU-Next/ || true
-          cp susfs4ksu/kernel_patches/fs/* fs/ || true
-          cp susfs4ksu/kernel_patches/include/linux/* include/linux/ || true
-          cd KernelSU-Next && patch -p1 < 10_enable_susfs_for_ksu.patch || true && cd ..
+          # SuSFS 1.5.2 커널 패치 직접 주입
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1 susfs
+          cp susfs/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch drivers/kernelsu/ || true
+          cp susfs/kernel_patches/fs/* fs/ || true
+          cp susfs/kernel_patches/include/linux/* include/linux/ || true
+          cd drivers/kernelsu && patch -p1 < 10_enable_susfs_for_ksu.patch || true
 
       - name: Compile GKI Kernel
         run: |
@@ -49,4 +53,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: KSU-Next-SuSFS-Pixel7-BootImage
-          path: android-kernel/out/android14-6.1/dist/boot.img
+          path: android-kernel/out/**/dist/boot.img
