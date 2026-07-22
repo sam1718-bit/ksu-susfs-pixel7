@@ -59,5 +59,6 @@ jobs:
         with:
           name: KSU-Next-SuSFS-Pixel7-BootImage
           path: |
-            android-kernel/out/**/boot.img
-            android-kernel/out/**/Image
+            android-kernel/**/*.img
+            android-kernel/**/Image
+            !android-kernel/**/build/**
