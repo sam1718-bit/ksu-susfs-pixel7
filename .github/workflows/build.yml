@@ -5,23 +5,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 8192
-          swap-size-mb: 1024
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-
       - name: Setup build environment & Git config
         run: |
           sudo apt-get update
           sudo apt-get install -y git ccache bison flex libssl-dev libelf-dev zip cpio build-essential python3 curl
           
-          # Git 기본 식별 정보 설정 (repo init 필수 항목)
+          # Git 기본 식별 정보 설정
           git config --global user.name "Builder"
           git config --global user.email "builder@example.com"
 
@@ -32,7 +23,8 @@ jobs:
       - name: Download Google GKI Kernel Source & Apply Patches
         run: |
           mkdir android-kernel && cd android-kernel
-          repo init -u https://android.googlesource.com/kernel/manifest -b android14-6.1 --depth=1
+          # 구글 정식 브랜치명: common-android14-6.1 적용
+          repo init -u https://android.googlesource.com/kernel/manifest -b common-android14-6.1 --depth=1
           repo sync -j$(nproc)
 
           # 내 폰의 순정 버전명 (6.1.157-android14-11) 강제 지정
@@ -42,7 +34,7 @@ jobs:
           curl -LSs "https://raw.githubusercontent.com/rifs2808/KernelSU-Next/next/kernel/setup.sh" | bash -s next
 
           # SuSFS 1.5.2 커널 패치 주입
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1 || true
           cp susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch KernelSU-Next/ || true
           cp susfs4ksu/kernel_patches/fs/* fs/ || true
           cp susfs4ksu/kernel_patches/include/linux/* include/linux/ || true
